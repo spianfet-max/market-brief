@@ -3,173 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market Monitor | Pro Dashboard</title>
+    <title>Market Monitor | G10 Quant Edition</title>
     <style>
-        :root {
-            --bg: #0a0c10;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --accent: #38bdf8;
-            --text: #f8fafc;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-        }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 900px; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 20px; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f1f5f9; --red: #f43f5e; --green: #10b981; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
         
-        /* Settings Panel */
-        .settings-panel { background: var(--card-bg); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #334155; }
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
-        .control-group { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        /* Configuration Section */
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; }
+        .config-item { display: flex; flex-direction: column; gap: 5px; font-size: 0.85rem; }
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.75rem; }
         
-        /* Dashboard Cards */
-        .market-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: var(--card-bg); border: 1px solid #334155; padding: 24px; border-radius: 20px; transition: 0.3s; position: relative; overflow: hidden; }
-        .card.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
-        .card-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
-        .price { font-size: 2.5rem; font-weight: 800; margin: 10px 0; color: var(--text); }
-        .badge { font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
-        .badge-vol { background: var(--danger); }
-        .badge-stable { background: var(--success); }
+        /* Market Grid */
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #334155; position: relative; transition: 0.3s; }
+        .card.alert { border-color: var(--red); box-shadow: 0 0 15px rgba(244, 63, 94, 0.3); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .card h3 { margin: 0; font-size: 0.9rem; color: var(--accent); }
+        .price { font-size: 1.8rem; font-weight: bold; margin: 8px 0; }
+        .stat { font-size: 0.75rem; color: #94a3b8; }
 
-        button { background: var(--accent); color: #000; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        button:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        input[type="range"] { accent-color: var(--accent); width: 100px; }
+        button { background: var(--accent); color: #0f172a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        input[type="number"], select { background: #0f172a; color: white; border: 1px solid #334155; padding: 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1 style="margin:0; font-size: 1.5rem;">Market<span style="color:var(--accent)">Monitor</span>.exe</h1>
-        <button id="mainBtn" onclick="toggleSystem()">INITIALIZE SYSTEM</button>
+    <div class="top-bar">
+        <h1>Market<span style="color:var(--accent)">Monitor</span></h1>
+        <button id="sysBtn" onclick="toggleSystem()">START MONITORING</button>
     </div>
 
-    <div class="settings-panel">
-        <div style="font-weight: bold; color: var(--accent);">System Configuration</div>
-        <div class="settings-grid">
-            <div class="control-group">
-                <input type="checkbox" id="check_USDJPY" checked> <label>USD/JPY FX</label>
-            </div>
-            <div class="control-group">
-                <input type="checkbox" id="check_SPY" checked> <label>S&P 500 (SPY)</label>
-            </div>
-            <div class="control-group">
-                <input type="checkbox" id="check_YIELD" checked> <label>10Y Treasury</label>
-            </div>
-            <div class="control-group" style="grid-column: span 2;">
-                <label>Loop Interval: <span id="intervalVal">15</span>s</label>
-                <input type="range" id="intervalRange" min="5" max="60" value="15" oninput="document.getElementById('intervalVal').innerText = this.value">
+    <div class="config-grid">
+        <div class="config-item">
+            <label>Sensitivity (% Move)</label>
+            <input type="number" id="threshold" value="0.20" step="0.01">
+        </div>
+        <div class="config-item">
+            <label>Time Window (Seconds)</label>
+            <input type="number" id="window" value="60">
+        </div>
+        <div class="config-item">
+            <label>G10 Pair Selection</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" class="pair-check" value="EUR" checked> EUR/USD</label>
+                <label><input type="checkbox" class="pair-check" value="JPY" checked> USD/JPY</label>
+                <label><input type="checkbox" class="pair-check" value="GBP" checked> GBP/USD</label>
+                <label><input type="checkbox" class="pair-check" value="AUD"> AUD/USD</label>
+                <label><input type="checkbox" class="pair-check" value="CAD"> USD/CAD</label>
+                <label><input type="checkbox" class="pair-check" value="CHF"> USD/CHF</label>
+                <label><input type="checkbox" class="pair-check" value="NZD"> NZD/USD</label>
+                <label><input type="checkbox" class="pair-check" value="SEK"> USD/SEK</label>
             </div>
         </div>
     </div>
 
-    <div id="marketGrid" class="market-grid">
-        </div>
+    <div id="marketGrid" class="market-grid"></div>
 </div>
 
 <script>
     const API_KEY = '469B1ZB3NB71W4X1';
     let isRunning = false;
-    let systemLoop;
-    let priceHistory = {};
+    let dataBuffer = {}; // Format: { "JPY": [{t: timestamp, p: price}, ...] }
+    let loop;
 
-    function speak(text) {
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.rate = 1.0;
-        window.speechSynthesis.speak(msg);
+    function speak(txt) {
+        const u = new SpeechSynthesisUtterance(txt);
+        window.speechSynthesis.speak(u);
     }
 
-    async function fetchUpdate(type, symbol) {
-        let url = `https://www.alphavantage.co/query?apikey=${API_KEY}&`;
-        if (type === 'FX') url += `function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=JPY`;
-        if (type === 'EQUITY') url += `function=GLOBAL_QUOTE&symbol=${symbol}`;
-        if (type === 'RATE') url += `function=TREASURY_YIELD&interval=daily`;
-
+    async function fetchPair(symbol) {
+        // Free API logic: Staggered calls to avoid 5-per-minute limit
+        const url = `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=${symbol}&apikey=${API_KEY}`;
         try {
-            const response = await fetch(url);
-            const data = await response.json();
-            let price, label;
-
-            if (type === 'FX') {
-                price = parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
-                label = "USD/JPY";
-            } else if (type === 'EQUITY') {
-                price = parseFloat(data["Global Quote"]["05. price"]);
-                label = symbol;
-            } else if (type === 'RATE') {
-                price = parseFloat(data["data"][0]["value"]);
-                label = "10Y Yield";
-            }
-
-            processData(label, price);
-        } catch (e) { console.error("Limit/Error", e); }
+            const res = await fetch(url);
+            const data = await res.json();
+            const price = parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
+            analyze(symbol, price);
+        } catch (e) { console.log("Limit hit"); }
     }
 
-    function processData(label, price) {
-        if (!priceHistory[label]) priceHistory[label] = [];
-        const oldPrice = priceHistory[label].slice(-1)[0];
-        priceHistory[label].push(price);
+    function analyze(symbol, currentPrice) {
+        if (!dataBuffer[symbol]) dataBuffer[symbol] = [];
+        const now = Date.now();
+        const windowMs = document.getElementById('window').value * 1000;
+        const threshold = document.getElementById('threshold').value / 100;
 
-        let statusBadge = '<span class="badge badge-stable">STABLE</span>';
-        if (oldPrice) {
-            const change = Math.abs((price - oldPrice) / oldPrice);
-            if (change > 0.0020) {
-                statusBadge = '<span class="badge badge-vol">VOLATILE</span>';
-                speak(`Warning, ${label} moved over point 2 percent.`);
+        // Clean old data
+        dataBuffer[symbol] = dataBuffer[symbol].filter(d => (now - d.t) < windowMs);
+        
+        if (dataBuffer[symbol].length > 0) {
+            const startPoint = dataBuffer[symbol][0];
+            const change = (currentPrice - startPoint.p) / startPoint.p;
+
+            if (Math.abs(change) >= threshold) {
+                triggerAlert(symbol, currentPrice, change);
             }
         }
 
-        speak(`${label} is ${price.toFixed(2)}`);
-        updateCard(label, price, statusBadge);
+        dataBuffer[symbol].push({t: now, p: currentPrice});
+        updateUI(symbol, currentPrice);
     }
 
-    function updateCard(label, price, badge) {
-        const id = `card-${label.replace('/','')}`;
-        let card = document.getElementById(id);
-        if (!card) {
-            card = document.createElement('div');
-            card.id = id;
-            card.className = 'card active';
-            document.getElementById('marketGrid').appendChild(card);
+    function triggerAlert(sym, price, change) {
+        const direction = change > 0 ? "up" : "down";
+        speak(`Volatility Alert. USD ${sym} is ${direction} ${(Math.abs(change)*100).toFixed(2)} percent.`);
+        document.getElementById(`card-${sym}`).classList.add('alert');
+        setTimeout(() => document.getElementById(`card-${sym}`).classList.remove('alert'), 5000);
+    }
+
+    function updateUI(sym, price) {
+        let el = document.getElementById(`card-${sym}`);
+        if (!el) {
+            el = document.createElement('div');
+            el.id = `card-${sym}`;
+            el.className = 'card';
+            document.getElementById('marketGrid').appendChild(el);
         }
-        card.innerHTML = `
-            <div class="card-header"><span>${label}</span> ${badge}</div>
-            <div class="price">${price.toFixed(3)}</div>
-            <div style="font-size:0.7rem; color:#64748b">Last Check: ${new Date().toLocaleTimeString()}</div>
-        `;
+        el.innerHTML = `<h3>USD/${sym}</h3><div class="price">${price.toFixed(3)}</div><div class="stat">Monitoring ${document.getElementById('window').value}s window</div>`;
     }
 
     function toggleSystem() {
         isRunning = !isRunning;
-        const btn = document.getElementById('mainBtn');
-        
+        const btn = document.getElementById('sysBtn');
         if (isRunning) {
-            btn.innerText = "STOP SYSTEM";
-            btn.style.background = "#ef4444";
-            speak("System online. Beginning market loop.");
-            startLoop();
+            btn.innerText = "STOP"; btn.style.background = "#f43f5e";
+            speak("G10 Quant Monitor Active.");
+            const pairs = Array.from(document.querySelectorAll('.pair-check:checked')).map(c => c.value);
+            let i = 0;
+            loop = setInterval(() => {
+                fetchPair(pairs[i]);
+                i = (i + 1) % pairs.length;
+            }, 15000); // 15s delay between pairs to respect 25-calls-per-day limit
         } else {
-            btn.innerText = "INITIALIZE SYSTEM";
-            btn.style.background = "#38bdf8";
-            clearInterval(systemLoop);
+            clearInterval(loop);
+            btn.innerText = "START MONITORING"; btn.style.background = "#38bdf8";
         }
-    }
-
-    function startLoop() {
-        const run = () => {
-            if (document.getElementById('check_USDJPY').checked) fetchUpdate('FX', 'USDJPY');
-            setTimeout(() => {
-                if (document.getElementById('check_SPY').checked) fetchUpdate('EQUITY', 'SPY');
-            }, 2000);
-            setTimeout(() => {
-                if (document.getElementById('check_YIELD').checked) fetchUpdate('RATE', 'TREASURY_YIELD');
-            }, 4000);
-        };
-        run();
-        const seconds = document.getElementById('intervalRange').value * 1000;
-        systemLoop = setInterval(run, seconds);
     }
 </script>
 </body>
