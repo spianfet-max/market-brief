@@ -3,115 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market Monitor | G10 Quant Edition</title>
+    <title>Market Monitor Elite | 2026 Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f1f5f9; --red: #f43f5e; --green: #10b981; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1100px; margin: auto; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        :root {
+            --bg: #05070a;
+            --surface: #11141b;
+            --accent: #00f2ff;
+            --success: #00ff9d;
+            --danger: #ff0055;
+            --text: #ffffff;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 30px; line-height: 1.5; }
+        .container { max-width: 1400px; margin: auto; }
         
-        /* Configuration Section */
-        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; }
-        .config-item { display: flex; flex-direction: column; gap: 5px; font-size: 0.85rem; }
-        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.75rem; }
-        
-        /* Market Grid */
-        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #334155; position: relative; transition: 0.3s; }
-        .card.alert { border-color: var(--red); box-shadow: 0 0 15px rgba(244, 63, 94, 0.3); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        .card h3 { margin: 0; font-size: 0.9rem; color: var(--accent); }
-        .price { font-size: 1.8rem; font-weight: bold; margin: 8px 0; }
-        .stat { font-size: 0.75rem; color: #94a3b8; }
+        /* Header & Ticker */
+        header { display: flex; justify-content: space-between; align-items: end; margin-bottom: 40px; border-bottom: 2px solid var(--glass); padding-bottom: 20px; }
+        .logo { font-size: 2rem; font-weight: 900; letter-spacing: -1px; }
+        .logo span { color: var(--accent); text-shadow: 0 0 15px var(--accent); }
+        .news-ticker { background: var(--surface); padding: 10px; border-radius: 8px; margin-bottom: 30px; font-size: 0.9rem; border: 1px solid var(--glass); overflow: hidden; white-space: nowrap; }
+        .ticker-move { display: inline-block; animation: ticker 30s linear infinite; color: var(--accent); }
+        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-        button { background: var(--accent); color: #0f172a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        input[type="number"], select { background: #0f172a; color: white; border: 1px solid #334155; padding: 5px; border-radius: 4px; }
+        /* Settings Card */
+        .settings-panel { background: var(--surface); border: 1px solid var(--glass); padding: 25px; border-radius: 24px; margin-bottom: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .setting-group label { display: block; font-size: 0.75rem; color: #666; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; }
+        .btn-main { background: var(--accent); color: #000; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 900; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .btn-main:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--accent); }
+
+        /* The Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .card { background: var(--surface); border: 1px solid var(--glass); padding: 30px; border-radius: 32px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
+        .card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .card h3 { margin: 0; font-size: 0.85rem; color: #888; text-transform: uppercase; }
+        .price { font-size: 3.5rem; font-weight: 900; margin: 15px 0; font-variant-numeric: tabular-nums; letter-spacing: -2px; }
+        .alert-active { border-color: var(--danger) !important; background: rgba(255, 0, 85, 0.05); animation: shake 0.5s infinite; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        /* Custom Checkboxes */
+        .pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        input[type="checkbox"] { accent-color: var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="top-bar">
-        <h1>Market<span style="color:var(--accent)">Monitor</span></h1>
-        <button id="sysBtn" onclick="toggleSystem()">START MONITORING</button>
+    <header>
+        <div class="logo">MARKET<span>MONITOR</span></div>
+        <button id="sysBtn" class="btn-main" onclick="toggleSystem()">Launch Core</button>
+    </header>
+
+    <div class="news-ticker">
+        <div class="ticker-move">
+            [MARKET NEWS] BOJ GOVERNOR HINTS AT RATE NORMALIZATION ... FED MINUTES SHOW HAWKISH BIAS ... NIKKEI 225 HITS RECORD HIGH ... USD/JPY VOLATILITY INCREASING ...
+        </div>
     </div>
 
-    <div class="config-grid">
-        <div class="config-item">
-            <label>Sensitivity (% Move)</label>
-            <input type="number" id="threshold" value="0.20" step="0.01">
+    <div class="settings-panel">
+        <div class="setting-group">
+            <label>Quantitative Sensitivty</label>
+            <input type="range" id="threshold" min="0.05" max="1.00" step="0.05" value="0.20" oninput="document.getElementById('tVal').innerText = this.value">
+            <span id="tVal" style="color:var(--accent)">0.20</span>% move
         </div>
-        <div class="config-item">
-            <label>Time Window (Seconds)</label>
-            <input type="number" id="window" value="60">
+        <div class="setting-group">
+            <label>Refresh Interval</label>
+            <select id="interval" style="background:#000; color:#fff; border:1px solid var(--glass); padding:10px; border-radius:8px; width:100%;">
+                <option value="10">Aggressive (10s)</option>
+                <option value="30" selected>Standard (30s)</option>
+                <option value="60">Conservative (60s)</option>
+            </select>
         </div>
-        <div class="config-item">
-            <label>G10 Pair Selection</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" class="pair-check" value="EUR" checked> EUR/USD</label>
+        <div class="setting-group">
+            <label>Asset Universe</label>
+            <div class="pair-grid">
                 <label><input type="checkbox" class="pair-check" value="JPY" checked> USD/JPY</label>
+                <label><input type="checkbox" class="pair-check" value="EUR" checked> EUR/USD</label>
                 <label><input type="checkbox" class="pair-check" value="GBP" checked> GBP/USD</label>
-                <label><input type="checkbox" class="pair-check" value="AUD"> AUD/USD</label>
-                <label><input type="checkbox" class="pair-check" value="CAD"> USD/CAD</label>
-                <label><input type="checkbox" class="pair-check" value="CHF"> USD/CHF</label>
-                <label><input type="checkbox" class="pair-check" value="NZD"> NZD/USD</label>
-                <label><input type="checkbox" class="pair-check" value="SEK"> USD/SEK</label>
+                <label><input type="checkbox" class="pair-check" value="SPY" checked> S&P 500</label>
             </div>
         </div>
     </div>
 
-    <div id="marketGrid" class="market-grid"></div>
+    <div id="marketGrid" class="grid">
+        </div>
 </div>
 
 <script>
     const API_KEY = '469B1ZB3NB71W4X1';
     let isRunning = false;
-    let dataBuffer = {}; // Format: { "JPY": [{t: timestamp, p: price}, ...] }
     let loop;
+    let prices = {};
 
-    function speak(txt) {
-        const u = new SpeechSynthesisUtterance(txt);
+    function speak(t) {
+        const u = new SpeechSynthesisUtterance(t);
+        u.pitch = 0.8; // Deep professional voice
+        u.rate = 1.0;
         window.speechSynthesis.speak(u);
     }
 
-    async function fetchPair(symbol) {
-        // Free API logic: Staggered calls to avoid 5-per-minute limit
-        const url = `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=${symbol}&apikey=${API_KEY}`;
+    async function fetchUpdate(sym) {
+        let url = `https://www.alphavantage.co/query?apikey=${API_KEY}&function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=${sym}`;
+        if(sym === 'SPY') url = `https://www.alphavantage.co/query?apikey=${API_KEY}&function=GLOBAL_QUOTE&symbol=SPY`;
+
         try {
             const res = await fetch(url);
             const data = await res.json();
-            const price = parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
-            analyze(symbol, price);
-        } catch (e) { console.log("Limit hit"); }
+            let price = sym === 'SPY' ? parseFloat(data["Global Quote"]["05. price"]) : parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
+            
+            process(sym, price);
+        } catch(e) {}
     }
 
-    function analyze(symbol, currentPrice) {
-        if (!dataBuffer[symbol]) dataBuffer[symbol] = [];
-        const now = Date.now();
-        const windowMs = document.getElementById('window').value * 1000;
+    function process(sym, price) {
         const threshold = document.getElementById('threshold').value / 100;
-
-        // Clean old data
-        dataBuffer[symbol] = dataBuffer[symbol].filter(d => (now - d.t) < windowMs);
-        
-        if (dataBuffer[symbol].length > 0) {
-            const startPoint = dataBuffer[symbol][0];
-            const change = (currentPrice - startPoint.p) / startPoint.p;
-
+        if (prices[sym]) {
+            const change = (price - prices[sym]) / prices[sym];
             if (Math.abs(change) >= threshold) {
-                triggerAlert(symbol, currentPrice, change);
+                document.getElementById(`card-${sym}`).classList.add('alert-active');
+                speak(`Alert. ${sym} is moving. Rate is ${price.toFixed(2)}`);
+                setTimeout(() => document.getElementById(`card-${sym}`).classList.remove('alert-active'), 5000);
             }
+        } else {
+            speak(`${sym} online.`);
         }
-
-        dataBuffer[symbol].push({t: now, p: currentPrice});
-        updateUI(symbol, currentPrice);
-    }
-
-    function triggerAlert(sym, price, change) {
-        const direction = change > 0 ? "up" : "down";
-        speak(`Volatility Alert. USD ${sym} is ${direction} ${(Math.abs(change)*100).toFixed(2)} percent.`);
-        document.getElementById(`card-${sym}`).classList.add('alert');
-        setTimeout(() => document.getElementById(`card-${sym}`).classList.remove('alert'), 5000);
+        
+        prices[sym] = price;
+        updateUI(sym, price);
     }
 
     function updateUI(sym, price) {
@@ -122,24 +140,25 @@
             el.className = 'card';
             document.getElementById('marketGrid').appendChild(el);
         }
-        el.innerHTML = `<h3>USD/${sym}</h3><div class="price">${price.toFixed(3)}</div><div class="stat">Monitoring ${document.getElementById('window').value}s window</div>`;
+        el.innerHTML = `<h3>${sym}</h3><div class="price">${price.toFixed(3)}</div><div style="color:var(--success); font-size:0.8rem;">● LIVE FEED ACTIVE</div>`;
     }
 
     function toggleSystem() {
         isRunning = !isRunning;
         const btn = document.getElementById('sysBtn');
-        if (isRunning) {
-            btn.innerText = "STOP"; btn.style.background = "#f43f5e";
-            speak("G10 Quant Monitor Active.");
-            const pairs = Array.from(document.querySelectorAll('.pair-check:checked')).map(c => c.value);
-            let i = 0;
-            loop = setInterval(() => {
-                fetchPair(pairs[i]);
-                i = (i + 1) % pairs.length;
-            }, 15000); // 15s delay between pairs to respect 25-calls-per-day limit
+        if(isRunning) {
+            btn.innerText = "Kill Core"; btn.style.background = "var(--danger)";
+            const activePairs = Array.from(document.querySelectorAll('.pair-check:checked')).map(p => p.value);
+            let idx = 0;
+            const run = () => {
+                fetchUpdate(activePairs[idx]);
+                idx = (idx + 1) % activePairs.length;
+            };
+            run();
+            loop = setInterval(run, document.getElementById('interval').value * 1000);
         } else {
             clearInterval(loop);
-            btn.innerText = "START MONITORING"; btn.style.background = "#38bdf8";
+            btn.innerText = "Launch Core"; btn.style.background = "var(--accent)";
         }
     }
 </script>
