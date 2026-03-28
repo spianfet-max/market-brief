@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QuantMonitor v2.0 | Yokohama Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; }
+        .container { max-width: 800px; margin: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-top: 20px; border-left: 6px solid #3b82f6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .price { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
+        .status-tag { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; text-transform: uppercase; }
+        .neutral { background: #475569; }
+        .volatile { background: #ef4444; }
+        .squeeze { background: #f59e0b; }
+        button { background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #059669; }
+        .log { margin-top: 20px; font-family: monospace; font-size: 0.9rem; color: #94a3b8; max-height: 150px; overflow-y: auto; background: #000; padding: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>QuantMonitor <span style="color: #3b82f6;">Pro</span></h1>
+        <button id="startBtn" onclick="initSystem()">▶ INITIALIZE SYSTEM</button>
+    </div>
+
+    <div id="dashboard">
+        <p style="color: #64748b;">Click the button above to unlock the Voice Engine and start 5-second polling.</p>
+    </div>
+
+    <div class="log" id="sysLog">System Log: Awaiting Initialization...</div>
+</div>
+
+<script>
+    const API_KEY = '469B1ZB3NB71W4X1';
+    let history = { "USDJPY": [], "SPY": [] };
+    const THRESHOLD = 0.0020; // 0.20% alert
+
+    function log(msg) {
+        const logEl = document.getElementById('sysLog');
+        logEl.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function speak(text) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95; 
+        window.speechSynthesis.speak(utterance);
+    }
+
+    async function fetchData(symbol, isFX = true) {
+        const func = isFX ? 'CURRENCY_EXCHANGE_RATE' : 'GLOBAL_QUOTE';
+        const params = isFX ? `from_currency=USD&to_currency=JPY` : `symbol=${symbol}`;
+        const url = `https://www.alphavantage.co/query?function=${func}&${params}&apikey=${API_KEY}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            let price;
+            if(isFX) {
+                price = parseFloat(data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
+            } else {
+                price = parseFloat(data["Global Quote"]["05. price"]);
+            }
+            
+            processUpdate(symbol, price);
+        } catch (e) {
+            log(`Error fetching ${symbol}: API Limit or Connection issue.`);
+        }
+    }
+
+    function processUpdate(symbol, price) {
+        const symHistory = history[symbol];
+        let status = "neutral";
+        let statusText = "Stable";
+
+        if (symHistory.length > 0) {
+            const lastPrice = symHistory[symHistory.length - 1];
+            const change = (price - lastPrice) / lastPrice;
+
+            // 1. Sudden Move Alert (0.20%)
+            if (Math.abs(change) >= THRESHOLD) {
+                status = "volatile";
+                statusText = "VOLATILE BREAKOUT";
+                speak(`Alert! ${symbol} volatile move of ${(change * 100).toFixed(2)} percent.`);
+            }
+
+            // 2. Tight Range Alert (Simplified "Squeeze")
+            // If the last 5 prices moved less than 0.01% on average
+            if (symHistory.length > 5) {
+                const range = Math.max(...symHistory.slice(-5)) - Math.min(...symHistory.slice(-5));
+                if (range / price < 0.0005) {
+                    status = "squeeze";
+                    statusText = "TIGHT RANGE SQUEEZE";
+                }
+            }
+        }
+
+        symHistory.push(price);
+        if (symHistory.length > 50) symHistory.shift(); // Keep memory clean
+
+        updateUI(symbol, price, status, statusText);
+        speak(`${symbol} is ${price.toFixed(2)}`);
+    }
+
+    function updateUI(symbol, price, status, statusText) {
+        const id = `card-${symbol}`;
+        let el = document.getElementById(id);
+        
+        if (!el) {
+            el = document.createElement('div');
+            el.id = id;
+            document.getElementById('dashboard').appendChild(el);
+        }
+
+        el.innerHTML = `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between">
+                    <strong>${symbol}</strong>
+                    <span class="status-tag ${status}">${statusText}</span>
+                </div>
+                <div class="price">${price.toFixed(3)}</div>
+                <div style="color: #64748b; font-size: 0.8rem;">Quantitative Target: 0.20% Volatility</div>
+            </div>
+        `;
+    }
+
+    function initSystem() {
+        document.getElementById('startBtn').style.display = 'none';
+        log("System Online. Voice Engine Active.");
+        speak("Quant Monitor Initialized. Fetching Yokohama Market Data.");
+        
+        // Run every 5 seconds
+        const run = () => {
+            fetchData("USDJPY", true);
+            // Alpha Vantage free tier is limited, so we stagger the second call
+            setTimeout(() => fetchData("SPY", false), 2000); 
+        };
+
+        run();
+        setInterval(run, 15000); // 15s to respect Alpha Vantage free tier limits
+    }
+</script>
+
+</body>
+</html>
